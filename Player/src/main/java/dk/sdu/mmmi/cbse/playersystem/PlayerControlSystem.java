@@ -1,0 +1,89 @@
+package dk.sdu.mmmi.cbse.playersystem;
+
+import dk.sdu.mmmi.cbse.common.bullet.BulletSPI;
+import dk.sdu.mmmi.cbse.common.data.Entity;
+import dk.sdu.mmmi.cbse.common.data.GameData;
+import dk.sdu.mmmi.cbse.common.data.GameKeys;
+import dk.sdu.mmmi.cbse.common.data.World;
+import dk.sdu.mmmi.cbse.common.services.IEntityProcessingService;
+
+
+import java.util.Collection;
+import java.util.ServiceLoader;
+
+import static java.util.stream.Collectors.toList;
+
+
+public class PlayerControlSystem implements IEntityProcessingService {
+
+    private final double reloadTimer = 15;
+    private static double reloading = 0;
+
+    private static int iFrames = 0;
+
+    private static int livesLost = 0;
+
+    @Override
+    public void process(GameData gameData, World world) {
+            
+        for (Entity player : world.getEntities(Player.class)) {
+            if (player.getHit() && iFrames >= 15){
+                iFrames = 0;
+                livesLost = livesLost+1;
+                player.setHit(false);
+                System.out.println(livesLost);
+            }
+            iFrames = iFrames+1;
+            if (livesLost >= 5){
+                player.setDead(true);
+                continue;
+            }
+
+            if (gameData.getKeys().isDown(GameKeys.LEFT)) {
+                player.setRotation(player.getRotation() - 3);
+            }
+            if (gameData.getKeys().isDown(GameKeys.RIGHT)) {
+                player.setRotation(player.getRotation() + 3);
+            }
+            if (gameData.getKeys().isDown(GameKeys.UP)) {
+                double changeX = Math.cos(Math.toRadians(player.getRotation()));
+                double changeY = Math.sin(Math.toRadians(player.getRotation()));
+                player.setX(player.getX() + changeX);
+                player.setY(player.getY() + changeY);
+            }
+            if (gameData.getKeys().isDown(GameKeys.SPACE)){
+
+                reloading = reloading +1;
+                if (reloading >= reloadTimer){
+                getBulletSPIs().forEach(bulletSPI -> {
+                    Entity bullet = bulletSPI.createBullet(player, gameData);
+                    world.addEntity(bullet);
+                    });
+                    reloading = 0;
+                }
+            }
+            
+        if (player.getX() < 0) {
+            player.setX(1);
+        }
+
+        if (player.getX() > gameData.getDisplayWidth()) {
+            player.setX(gameData.getDisplayWidth()-1);
+        }
+
+        if (player.getY() < 0) {
+            player.setY(1);
+        }
+
+        if (player.getY() > gameData.getDisplayHeight()) {
+            player.setY(gameData.getDisplayHeight()-1);
+        }
+            
+                                        
+        }
+    }
+
+    private Collection<? extends BulletSPI> getBulletSPIs() {
+        return ServiceLoader.load(BulletSPI.class).stream().map(ServiceLoader.Provider::get).collect(toList());
+    }
+}
