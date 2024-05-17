@@ -30,16 +30,13 @@ public class CollisionTest {
     @Test
     void testShouldHit() {
 
-        Entity entity1 = new Entity();
-        Entity entity2 = new Entity();
+        when(entity1.getX()).thenReturn(0.0);
+        when(entity1.getY()).thenReturn(0.0);
+        when(entity1.getRadius()).thenReturn(12f);
 
-        entity1.setX(0);
-        entity1.setY(0);
-        entity1.setRadius(12);
-
-        entity2.setX(0);
-        entity2.setY(0);
-        entity2.setRadius(12);
+        when(entity2.getX()).thenReturn(0.0);
+        when(entity2.getY()).thenReturn(0.0);
+        when(entity2.getRadius()).thenReturn(12f);
 
         boolean result = collisionDetector.collides(entity1, entity2);
         assertTrue(result, "Expected collision not detected");
@@ -48,16 +45,14 @@ public class CollisionTest {
     @Test
     void testShouldNotHit() {
 
-        Entity entity1 = new Entity();
-        Entity entity2 = new Entity();
 
-        entity1.setX(100);
-        entity1.setY(0);
-        entity1.setRadius(12);
+        when(entity1.getX()).thenReturn(0.0);
+        when(entity1.getY()).thenReturn(100.0);
+        when(entity1.getRadius()).thenReturn(12f);
 
-        entity2.setX(0);
-        entity2.setY(100);
-        entity2.setRadius(12);
+        when(entity2.getX()).thenReturn(100.0);
+        when(entity2.getY()).thenReturn(0.0);
+        when(entity2.getRadius()).thenReturn(12f);
 
         boolean result = collisionDetector.collides(entity1, entity2);
         assertFalse(result, "Unexpected collision occurred");
