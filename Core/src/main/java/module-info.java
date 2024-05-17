@@ -1,8 +1,8 @@
 module Core {
     requires Common;
-    requires CommonBullet;    
-    requires javafx.graphics;
+    requires CommonBullet;
     requires spring.context;
+    requires javafx.graphics;
     requires spring.beans;
     requires spring.core;
     opens dk.sdu.mmmi.cbse.main to javafx.graphics,spring.core;

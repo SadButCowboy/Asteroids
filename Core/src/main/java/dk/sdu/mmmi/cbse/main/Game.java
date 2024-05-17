@@ -16,6 +16,7 @@ import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +25,11 @@ import static java.util.stream.Collectors.toList;
 
 public class Game {
 
+    private final List<IEntityProcessingService> entityProcessingServiceList;
+
+    private final List<IGamePluginService> gamePluginServices;
+
+    private final List<IPostEntityProcessingService> postEntityProcessingServices;
 
     private final GameData gameData = new GameData();
     private final World world = new World();
@@ -31,6 +37,12 @@ public class Game {
 
     Pane gameWindow = new Pane();
 
+    public Game(List<IEntityProcessingService> entityProcessingServiceList, List<IGamePluginService> gamePluginServices, List<IPostEntityProcessingService> postEntityProcessingServices){
+
+        this.entityProcessingServiceList = entityProcessingServiceList;
+        this.gamePluginServices = gamePluginServices;
+        this.postEntityProcessingServices = postEntityProcessingServices;
+    }
 
     public void start(Stage window) throws Exception {
         Text text = new Text(10, 20, "Destroyed asteroids: 0");
@@ -69,7 +81,7 @@ public class Game {
         });
 
         // Lookup all Game Plugins using ServiceLoader
-        for (IGamePluginService iGamePlugin : getPluginServices()) {
+        for (IGamePluginService iGamePlugin : gamePluginServices) {
             iGamePlugin.start(gameData, world);
         }
         for (Entity entity : world.getEntities()) {
@@ -103,10 +115,10 @@ public class Game {
     private void update() {
 
         // Update
-        for (IEntityProcessingService entityProcessorService : getEntityProcessingServices()) {
+        for (IEntityProcessingService entityProcessorService : entityProcessingServiceList) {
             entityProcessorService.process(gameData, world);
         }
-        for (IPostEntityProcessingService postEntityProcessorService : getPostEntityProcessingServices()) {
+        for (IPostEntityProcessingService postEntityProcessorService : postEntityProcessingServices) {
             postEntityProcessorService.process(gameData, world);
         }
     }
@@ -132,19 +144,6 @@ public class Game {
             polygon.setTranslateY(entity.getY());
             polygon.setRotate(entity.getRotation());
         }
-    }
-
-
-    private Collection<? extends IGamePluginService> getPluginServices() {
-        return ServiceLoader.load(IGamePluginService.class).stream().map(ServiceLoader.Provider::get).collect(toList());
-    }
-
-    private Collection<? extends IEntityProcessingService> getEntityProcessingServices() {
-        return ServiceLoader.load(IEntityProcessingService.class).stream().map(ServiceLoader.Provider::get).collect(toList());
-    }
-
-    private Collection<? extends IPostEntityProcessingService> getPostEntityProcessingServices() {
-        return ServiceLoader.load(IPostEntityProcessingService.class).stream().map(ServiceLoader.Provider::get).collect(toList());
     }
 
 
