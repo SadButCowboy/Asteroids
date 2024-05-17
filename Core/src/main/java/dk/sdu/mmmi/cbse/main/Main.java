@@ -7,13 +7,16 @@ import dk.sdu.mmmi.cbse.common.data.World;
 import dk.sdu.mmmi.cbse.common.services.IEntityProcessingService;
 import dk.sdu.mmmi.cbse.common.services.IGamePluginService;
 import dk.sdu.mmmi.cbse.common.services.IPostEntityProcessingService;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.ServiceLoader;
+
+import java.lang.module.Configuration;
+import java.lang.module.ModuleFinder;
+import java.lang.module.ModuleReference;
+import java.lang.module.ModuleDescriptor;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+
 import static java.util.stream.Collectors.toList;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -30,9 +33,25 @@ public class Main extends Application {
     private final World world = new World();
     private final Map<Entity, Polygon> polygons = new ConcurrentHashMap<>();
 
+    private static ModuleLayer moduleLayer;
     Pane gameWindow = new Pane();
     public static void main(String[] args) {
+        moduleLayer = createLayer();
         launch(Main.class);
+    }
+
+    private static ModuleLayer createLayer() {
+        ModuleFinder finder = ModuleFinder.of(Paths.get("Plugins"));
+        List<String> plugins = finder
+                .findAll()
+                .stream()
+                .map(ModuleReference::descriptor)
+                .map(ModuleDescriptor::name)
+                .collect(Collectors.toList());
+        ModuleLayer parent = ModuleLayer.boot();
+
+        Configuration cf = parent.configuration().resolve(finder, ModuleFinder.of(), plugins);
+        return parent.defineModulesWithOneLoader(cf, ClassLoader.getSystemClassLoader());
     }
 
     @Override
@@ -148,6 +167,9 @@ public class Main extends Application {
     }
 
     private Collection<? extends IPostEntityProcessingService> getPostEntityProcessingServices() {
-        return ServiceLoader.load(IPostEntityProcessingService.class).stream().map(ServiceLoader.Provider::get).collect(toList());
+        List<IPostEntityProcessingService> postEntityProcessingServices = new ArrayList<>();
+        ServiceLoader.load(moduleLayer, IPostEntityProcessingService.class).stream()
+                .map(ServiceLoader.Provider::get).forEach(postEntityProcessingServices::add);
+        return postEntityProcessingServices;
     }
 }
