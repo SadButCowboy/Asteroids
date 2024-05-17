@@ -5,8 +5,11 @@ import dk.sdu.mmmi.cbse.common.data.GameData;
 import dk.sdu.mmmi.cbse.common.data.World;
 import dk.sdu.mmmi.cbse.common.services.IEntityProcessingService;
 import dk.sdu.mmmi.cbse.commonasteroid.Asteroid;
-import dk.sdu.mmmi.cbse.commonasteroid.AsteroidSPI;
-import dk.sdu.mmmi.cbse.asteroids.AsteroidSplitter;
+import dk.sdu.mmmi.cbse.commonasteroid.AsteroidSPI;;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 import java.util.Random;
 
@@ -19,6 +22,8 @@ public class AsteroidControlSystem implements IEntityProcessingService {
 
     private static double asteroidSpawnCount = 0;
 
+    private static int score;
+
     private double randomDirection;
 
     private Random random = new Random();
@@ -27,6 +32,22 @@ public class AsteroidControlSystem implements IEntityProcessingService {
         Random random = new Random();
         randomDirection = random.nextDouble(0, 360);
         return randomDirection;
+    }
+
+    private void incrementScore(){
+        HttpClient client = HttpClient.newHttpClient();
+        String apiUrl = "http://localhost:8080/score";
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .GET()
+                .build();
+        try {
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            score = Integer.parseInt(response.body());
+            System.out.println("Current Score is: "+score);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -56,9 +77,11 @@ public class AsteroidControlSystem implements IEntityProcessingService {
                     asteroidsPlugin.createBabyAsteroid(gameData, babyAsteroid, babyAsteroid.getTimesSplit());
                 }
                 curAste.setDead(true);
+                incrementScore();
                 continue;
             } else if (curAste.getHit() && curAste.getTimesSplit() >= 3) {
                 curAste.setDead(true);
+                incrementScore();
                 continue;
             }
 
