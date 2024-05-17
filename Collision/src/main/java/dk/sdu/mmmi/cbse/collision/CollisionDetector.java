@@ -20,6 +20,7 @@ public class CollisionDetector implements IPostEntityProcessingService {
                 if (entity1.getID().equals(entity2.getID())) {
                     continue;
                 }
+                // if the two entities are of the same class, skip the iteration
                 if (entity1.getClass() == entity2.getClass()){
                     continue;
                 }
@@ -37,7 +38,7 @@ public class CollisionDetector implements IPostEntityProcessingService {
         float dx = (float) entity1.getX() - (float) entity2.getX();
         float dy = (float) entity1.getY() - (float) entity2.getY();
         float distance = (float) Math.sqrt(dx * dx + dy * dy);
-        return distance < (entity1.getRadius() + entity2.getRadius());
+        return distance <= (entity1.getRadius() + entity2.getRadius());
     }
 
 }
